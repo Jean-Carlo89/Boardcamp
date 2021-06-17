@@ -226,7 +226,10 @@ const connection = new Pool({
                             'string.pattern.base' : '"phone" deve conter somente números',
                             'string.max': '"phone" deve conter no máximo 11 números'
                         }),
-                    cpf: '01234567890',
+                    cpf: joi.string().pattern(/^[0-9]{11}$/)
+                        .messages({
+                            'string.pattern.base' : '"cpf" deve ser composto de apenas números e ter 11 caracteres',   
+                        }),
                     birthday: '1992-10-05'
                   }
             )

@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import pg from 'pg'
+import joi from 'joi'
 
 const app = express()
 
@@ -19,7 +20,56 @@ const connection = new Pool({
   })
 
 
-  app.get("")
+  app.get("/categories" , async (req,res)=>{
+    try{
+        const result = await connection.query('SELECT * FROM categories')
+        res.send(result.rows)
+    }catch(e){
+        console.log('Erro')
+        console.log(e)
+        res.sendStatus(500)
+    }
+
+  })
+
+  app.post("/categories" , async (req,res)=>{
+    //console.log(req)
+    // const userSchema = joi.object(
+
+    // )
+
+    const {name} = req.body
+    console.log(name)
+
+    if(!name){
+        res.status(400).send('O nome da categoria não pode estar vazio')
+        return
+    }
+    
+    try{
+        const result =  await connection.query(`SELECT * FROM categories WHERE name = $1`,[name])
+        console.log(result.rows[0].name)
+        if(result.rows[0].name===name){
+            res.status(409).send('Categoria já existe')
+        }
+    }catch(e){
+        console.log('erro')
+        console.log(e)
+    }
+
+    
+    // 
+    
+    // try{
+    //     const result = await connection.query(`INSERT INTO categories (name) VALUES ($1)`,[name])
+    //     res.sendStatus(201)
+    // }catch(e){
+    //     console.log('Erro')
+    //     console.log(e)
+    //     res.sendStatus(500)
+    // }
+
+  })
 
 
 

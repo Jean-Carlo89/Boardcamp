@@ -67,7 +67,12 @@ const connection = new Pool({
 /***********************************--------------Games------------------------ */
     app.get("/games" , async (req,res)=>{
         try{
-            const result = await connection.query('SELECT * FROM games')
+            const result = await connection.query(`
+            SELECT games.* , categories.name AS "categoryName"
+            FROM games JOIN categories
+            ON games."categoryId" = categories.id
+            
+            `)
             res.send(result.rows)
         }catch(e){
             console.log('Erro')

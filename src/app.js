@@ -54,7 +54,7 @@ const connection = new Pool({
         }
     }catch(e){
         console.log('erro')
-        console.log(e)
+        console.log(e )
     }
 
     

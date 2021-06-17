@@ -79,7 +79,7 @@ const connection = new Pool({
             SELECT games.* , categories.name AS "categoryName"
             FROM games JOIN categories
             ON games."categoryId" = categories.id
-            WHERE games.name LIKE $1
+            WHERE games.name ILIKE $1
             
             `,[`%${name}%`])
 
@@ -191,7 +191,9 @@ const connection = new Pool({
             console.log(e)
         }
 
-        
+ /*-----------------------------Customers--------------------------*/
+ 
+ 
         
         
         })

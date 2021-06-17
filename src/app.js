@@ -115,88 +115,155 @@ const connection = new Pool({
 
       app.post("/games" , async (req,res)=>{
 
-        const {categoryId,name,image,stockTotal,pricePerDay} = req.body
+            const {categoryId,name,image,stockTotal,pricePerDay} = req.body
 
-        try{
-            const categoryTest = await connection.query(`SELECT * FROM categories WHERE id = $1`,[categoryId])
-            const categoryExist = categoryTest.rows.length
-            const gameTest = await connection.query(`SELECT * FROM games WHERE name = $1`,[name])
-            console.log(gameTest)
-            const gameAlreadyExist = gameTest.rows.length
-            //console.log(result)
-            
-                if(!categoryExist){
-                    res.status(400).send('categoria não existe')
-                    return
-                }
-
-                if(gameAlreadyExist){
-                    res.status(409).send("jogo já cadastrado")
-                    return
-                }
-
-                    
-                     const userSchema = joi.object(
-                        {
-                            name: joi.string().min(1).required()
-                            .messages({
-                                // 'string.base': `"name" should be a type of 'text'`,
-                                'string.empty': `"name" não pode estar vazio`,
-                                'any.required': `"name" is a required field`
-                            }),
-                            image: joi.string().pattern(/(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|gif|png)/),
-                            stockTotal: joi.number().positive().integer().required()
-                            .messages({
-                                'number.base': `"stockTotal" deve ser do tipo 'number'`,
-                                'number.empty': `"stockTotal" não pode estar vazio`,
-                                'number.positive': `"stockTotal" tem que ser maior do que zero`,
-                                'any.required': `"stockTotal" is a required field`
-                            }),
-                            categoryId: joi.number().positive().required(),
-                            pricePerDay: joi.number().positive().required()
-                            .messages({
-                                'number.base': `"pricePerDay" deve ser do tipo 'number'`,
-                                'number.empty': `"pricePerDay" não pode estar vazio`,
-                                'number.positive': `"pricePerDay" tem que ser maior do que zero`,
-                                'any.required': `"pricePerDay" is a required field`
-                            })
-                        })
-
-
-                    const validateNewGame = userSchema.validate(req.body)
-                        
-                        if(validateNewGame.error){
-                            //console.log('nao pode')
-                            res.status(400).send(validateNewGame.error.details[0].message)
-                            return
-                        }else{
-                            //console.log(' pode')
-                            try{
-                                await connection.query(`INSERT INTO games (name,image,"stockTotal","categoryId","pricePerDay") VALUES ($1,$2,$3,$4,$5)`,[name,image,stockTotal,categoryId,pricePerDay])
-                                res.sendStatus(200)
-                            }catch(e){
-                                console.log('Erro ao salvar jogo novo no banco de dados')
-                                console.log(e)
-                                res.sendStatus(500)
-                            }
-                            
-                        }
-                                
-                         
-                   
+            try{
+                const categoryTest = await connection.query(`SELECT * FROM categories WHERE id = $1`,[categoryId])
+                const categoryExist = categoryTest.rows.length
+                const gameTest = await connection.query(`SELECT * FROM games WHERE name = $1`,[name])
+                console.log(gameTest)
+                const gameAlreadyExist = gameTest.rows.length
+                //console.log(result)
                 
-            
-        }catch(e){
-            console.log('Erro ao procurar categoria do jogo novo')
-            console.log(e)
-        }
+                    if(!categoryExist){
+                        res.status(400).send('categoria não existe')
+                        return
+                    }
 
- /*-----------------------------Customers--------------------------*/
- 
- 
-        
+                    if(gameAlreadyExist){
+                        res.status(409).send("jogo já cadastrado")
+                        return
+                    }
+
+                        
+                        const userSchema = joi.object(
+                            {
+                                name: joi.string().min(1).required()
+                                .messages({
+                                    // 'string.base': `"name" should be a type of 'text'`,
+                                    'string.empty': `"name" não pode estar vazio`,
+                                    'any.required': `"name" is a required field`
+                                }),
+                                image: joi.string().pattern(/(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|gif|png)/),
+                                stockTotal: joi.number().positive().integer().required()
+                                .messages({
+                                    'number.base': `"stockTotal" deve ser do tipo 'number'`,
+                                    'number.empty': `"stockTotal" não pode estar vazio`,
+                                    'number.positive': `"stockTotal" tem que ser maior do que zero`,
+                                    'any.required': `"stockTotal" is a required field`
+                                }),
+                                categoryId: joi.number().positive().required(),
+                                pricePerDay: joi.number().positive().required()
+                                .messages({
+                                    'number.base': `"pricePerDay" deve ser do tipo 'number'`,
+                                    'number.empty': `"pricePerDay" não pode estar vazio`,
+                                    'number.positive': `"pricePerDay" tem que ser maior do que zero`,
+                                    'any.required': `"pricePerDay" is a required field`
+                                })
+                            })
+
+
+                        const validateNewGame = userSchema.validate(req.body)
+                            
+                            if(validateNewGame.error){
+                                //console.log('nao pode')
+                                res.status(400).send(validateNewGame.error.details[0].message)
+                                return
+                            }else{
+                                //console.log(' pode')
+                                try{
+                                    await connection.query(`INSERT INTO games (name,image,"stockTotal","categoryId","pricePerDay") VALUES ($1,$2,$3,$4,$5)`,[name,image,stockTotal,categoryId,pricePerDay])
+                                    res.sendStatus(200)
+                                }catch(e){
+                                    console.log('Erro ao salvar jogo novo no banco de dados')
+                                    console.log(e)
+                                    res.sendStatus(500)
+                                }
+                                
+                            }
+                                    
+                            
+                    
+                    
+                
+            }catch(e){
+                console.log('Erro ao procurar categoria do jogo novo')
+                console.log(e)
+            }
         
         })
+ /*-----------------------------Customers--------------------------*/
+ 
+        app.get("/customers", async(req,res)=>{
+            
+            
+            try{
+                const allCustomers = await connection.query(`SELECT * FROM customers`)
+                
+                res.send(allCustomers.rows)
+            }catch(e){
+                console.log('Erro ao pegar a lista de clientes')
+                console.log(e)
+            }      
+        })
+
+
+        app.post("/customers", async(req,res)=>{
+            
+            
+            const userSchema = joi.object(
+
+                {
+                    name: joi.string().min(1)
+                     .messages({
+                        // 'string.base': `"name" should be a type of 'text'`,
+                        'string.empty': `"name" não pode estar vazio`,
+                        'any.required': `"name" is a required field`
+                        }),
+                    phone: joi.string().min(10).max(11).pattern(/^[0-9]*$/)
+                        .messages({
+                            'string.min': '"phone" tem que ter no mínimo 10 números',
+                            'string.pattern.base' : '"phone" deve conter somente números',
+                            'string.max': '"phone" deve conter no máximo 11 números'
+                        }),
+                    cpf: '01234567890',
+                    birthday: '1992-10-05'
+                  }
+            )
+
+            const validateNewUser = userSchema.validate(req.body)
+
+            if(validateNewUser.error){
+                console.log('nao pode')
+                //res.status(400).send(validateNewUser.error)
+                res.status(400).send(validateNewUser.error.details[0].message)
+                return
+            }else{
+                console.log(' pode')
+                // try{
+                //     await connection.query(`INSERT INTO games (name,image,"stockTotal","categoryId","pricePerDay") VALUES ($1,$2,$3,$4,$5)`,[name,image,stockTotal,categoryId,pricePerDay])
+                //     res.sendStatus(200)
+                // }catch(e){
+                //     console.log('Erro ao salvar jogo novo no banco de dados')
+                //     console.log(e)
+                //     res.sendStatus(500)
+                // }
+                
+            }
+
+            try{
+                const allCustomers = await connection.query(`SELECT * FROM customers`)
+                
+                res.send(allCustomers.rows)
+            }catch(e){
+                console.log('Erro ao pegar a lista de clientes')
+                console.log(e)
+            }      
+        })
+        
+        
+        
+        
     
 
 

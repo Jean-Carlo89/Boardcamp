@@ -66,6 +66,35 @@ const connection = new Pool({
 
 /***********************************--------------Games------------------------ */
     app.get("/games" , async (req,res)=>{
+        
+        console.log(req.query)
+        const {name} = req.query
+
+
+        if(name){
+            console.log('foi')
+            
+        try{
+            const result = await connection.query(`
+            SELECT games.* , categories.name AS "categoryName"
+            FROM games JOIN categories
+            ON games."categoryId" = categories.id
+            WHERE games.name LIKE $1
+            
+            `,[`%${name}%`])
+
+            //console.log(result)
+            res.send(result.rows)
+        }catch(e){
+            console.log('Erro')
+            console.log(e)
+            res.sendStatus(500)
+        }
+
+        }else{
+            //console.log('nao foi')
+        
+        
         try{
             const result = await connection.query(`
             SELECT games.* , categories.name AS "categoryName"
@@ -78,6 +107,7 @@ const connection = new Pool({
             console.log('Erro')
             console.log(e)
             res.sendStatus(500)
+        }
         }
     
       })

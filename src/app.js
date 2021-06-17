@@ -33,13 +33,8 @@ const connection = new Pool({
   })
 
   app.post("/categories" , async (req,res)=>{
-    //console.log(req)
-    // const userSchema = joi.object(
-
-    // )
 
     const {name} = req.body
-    console.log(name)
 
     if(!name){
         res.status(400).send('O nome da categoria não pode estar vazio')
@@ -48,28 +43,26 @@ const connection = new Pool({
     
     try{
         const result =  await connection.query(`SELECT * FROM categories WHERE name = $1`,[name])
-        console.log(result.rows[0].name)
-        if(result.rows[0].name===name){
+        
+        if(!result.rows.length){
+            try{
+                await connection.query(`INSERT INTO categories (name) VALUES ($1)`,[name])
+                res.sendStatus(201)
+            }catch(e){
+                console.log('Erro ao salvar nova categoria no banco de dados')
+                console.log(e)
+                res.sendStatus(500)
+            }
+        }else{
             res.status(409).send('Categoria já existe')
         }
+
     }catch(e){
-        console.log('erro')
-        console.log(e )
-    }
-
+            console.log('Erro ao comparar se categoria já existe no banco de dados')
+            console.log(e)
+        }
     
-    // 
-    
-    // try{
-    //     const result = await connection.query(`INSERT INTO categories (name) VALUES ($1)`,[name])
-    //     res.sendStatus(201)
-    // }catch(e){
-    //     console.log('Erro')
-    //     console.log(e)
-    //     res.sendStatus(500)
-    // }
-
-  })
+    })
 
 
 

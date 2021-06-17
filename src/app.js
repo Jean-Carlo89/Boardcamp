@@ -83,9 +83,23 @@ const connection = new Pool({
         const {categoryId,name,image,stockTotal,pricePerDay} = req.body
 
         try{
-            const result = await connection.query(`SELECT * FROM categories WHERE id = $1`,[categoryId])
+            const categoryTest = await connection.query(`SELECT * FROM categories WHERE id = $1`,[categoryId])
+            const categoryExist = categoryTest.rows.length
+            const gameTest = await connection.query(`SELECT * FROM games WHERE name = $1`,[name])
+            console.log(gameTest)
+            const gameAlreadyExist = gameTest.rows.length
             //console.log(result)
-                if(result.rows.length){
+            
+                if(!categoryExist){
+                    res.status(400).send('categoria não existe')
+                    return
+                }
+
+                if(gameAlreadyExist){
+                    res.status(409).send("jogo já cadastrado")
+                    return
+                }
+
                     
                      const userSchema = joi.object(
                         {
@@ -123,7 +137,7 @@ const connection = new Pool({
                         }else{
                             //console.log(' pode')
                             try{
-                                await connection.query(`INSERT INTO games (name,image,stockTotal,categoryId,pricePerDay) VALUES ($1,$2,$3,$4,$5)`,[name,image,stockTotal,categoryId,pricePerDay])
+                                await connection.query(`INSERT INTO games (name,image,"stockTotal","categoryId","pricePerDay") VALUES ($1,$2,$3,$4,$5)`,[name,image,stockTotal,categoryId,pricePerDay])
                                 res.sendStatus(200)
                             }catch(e){
                                 console.log('Erro ao salvar jogo novo no banco de dados')
@@ -135,10 +149,7 @@ const connection = new Pool({
                                 
                          
                    
-                }else{
-                    res.status(400).send('categoria não existe')
-                    return
-                }
+                
             
         }catch(e){
             console.log('Erro ao procurar categoria do jogo novo')
@@ -147,77 +158,6 @@ const connection = new Pool({
 
         
         
-        
-        
-        // const userSchema = joi.object(
-        //     {
-        //         name: joi.string().min(1).required()
-        //         .messages({
-        //            // 'string.base': `"name" should be a type of 'text'`,
-        //             'string.empty': `"name" não pode estar vazio`,
-        //             'any.required': `"name" is a required field`
-        //         }),
-        //         image: joi.string().pattern(/(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|gif|png)/)
-        //         ,
-        //         pricePerDay: joi.number().positive().integer().required()
-        //         .messages({
-        //             'number.base': `"stockTotal" deve ser do tipo 'number'`,
-        //             'number.empty': `"stockTotal" não pode estar vazio`,
-        //             'number.positive': `"stockTotal" tem que ser maior do que zero`,
-        //             'any.required': `"stockTotal" is a required field`
-        //         }),
-        //         categoryId: joi.number().positive().required(),
-        //         pricePerDay: joi.number().positive().required()
-        //         .messages({
-        //             'number.base': `"pricePerDay" deve ser do tipo 'number'`,
-        //             'number.empty': `"pricePerDay" não pode estar vazio`,
-        //             'number.positive': `"pricePerDay" tem que ser maior do que zero`,
-        //             'any.required': `"pricePerDay" is a required field`
-        //         })
-        //       }
-        //     )
-
-        //   const validateNewGame = userSchema.validate(req.body)
-        //   console.log(validateNewGame)   
-          
-        //   if(validateNewGame.error){
-        //       console.log('nao pode')
-        //       res.status(400).send(validateNewGame.error.details[0].message)
-        //   }else{
-        //       console.log(' pode')
-              
-        //   }
-    
-        
-        
-        
-        
-        
-        // if(!name){
-        //     res.status(400).send('O nome do jogo não pode estar vazio')
-        //     return
-        // }
-        
-        // try{
-        //     const result =  await connection.query(`SELECT * FROM games WHERE name = $1`,[name])
-            
-        //     if(!result.rows.length){
-        //         try{
-        //             await connection.query(`INSERT INTO games (name) VALUES ($1)`,[name])
-        //             res.sendStatus(201)
-        //         }catch(e){
-        //             console.log('Erro ao salvar novo jogo no banco de dados')
-        //             console.log(e)
-        //             res.sendStatus(500)
-        //         }
-        //     }else{
-        //         res.status(409).send('Jogo já existe')
-        //     }
-    
-        // }catch(e){
-        //         console.log('Erro ao comparar se jogo já existe no banco de dados')
-        //         console.log(e)
-        //     }
         
         })
     

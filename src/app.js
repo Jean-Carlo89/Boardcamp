@@ -235,6 +235,33 @@ const connection = new Pool({
             }
         })
 
+        app.get("/customers/:id", async(req,res)=>{
+               //console.log(req.params.id) 
+                const {id} = req.params
+               // console.log(id)
+               
+               try{
+                    const customer = await connection.query(`
+                    SELECT * FROM customers
+                    WHERE id = $1
+                    `,[id])
+
+                    if(customer.rows.length){
+                        customer.rows[0].birthday=dayjs(customer.rows[0].birthday).format('DD-MM-YYYY')
+                        
+                    res.send(customer.rows[0])
+                    }else{
+                        res.sendStatus(404)
+                    }
+               }catch(e){
+                console.log('Erro ao procurar o cliente especificado')
+                console.log(e)
+               }
+
+              
+
+        })
+
 
         app.post("/customers", async(req,res)=>{
             

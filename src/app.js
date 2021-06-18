@@ -197,18 +197,42 @@ const connection = new Pool({
  
         app.get("/customers", async(req,res)=>{
             
-           
-            
+                const {cpf} = req.query
+
+
+            if(cpf){
+                console.log('foi')
+                
             try{
-                const allCustomers = await connection.query(`SELECT * FROM customers`)
-                allCustomers.rows.forEach((customer)=>{
-                    customer.birthday=dayjs(customer.birthday).format('DD-MM-YYYY')
-                })
-                res.send(allCustomers.rows)
+                const result = await connection.query(`
+                SELECT * 
+                FROM customers
+                WHERE customers.cpf LIKE $1
+                
+                `,[`%${cpf}%`])
+
+                //console.log(result)
+                res.send(result.rows)
             }catch(e){
-                console.log('Erro ao pegar a lista de clientes')
+                console.log('Erro')
                 console.log(e)
-            }      
+                res.sendStatus(500)
+            }
+
+            }else{
+                
+                try{
+                    const allCustomers = await connection.query(`SELECT * FROM customers`)
+                    allCustomers.rows.forEach((customer)=>{
+                        customer.birthday=dayjs(customer.birthday).format('DD-MM-YYYY')
+                    })
+                    res.send(allCustomers.rows)
+                }catch(e){
+                    console.log('Erro ao pegar a lista de clientes')
+                    console.log(e)
+                } 
+                
+            }
         })
 
 

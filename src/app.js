@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import pg from 'pg'
 import joi from 'joi'
+import dayjs from 'dayjs'
 
 const app = express()
 
@@ -199,7 +200,9 @@ const connection = new Pool({
             
             try{
                 const allCustomers = await connection.query(`SELECT * FROM customers`)
-                
+                allCustomers.rows.forEach((customer)=>{
+                    customer.birthday=dayjs(customer.birthday).format('DD-MM-YYYY')
+                })
                 res.send(allCustomers.rows)
             }catch(e){
                 console.log('Erro ao pegar a lista de clientes')
@@ -210,6 +213,12 @@ const connection = new Pool({
 
         app.post("/customers", async(req,res)=>{
             
+            console.log(dayjs(Date.now()).format('DD-MM-YYYY'))
+            console.log(dayjs("1992-10-05").format('DD-MM-YYYY'))
+            console.log(req.body.birthday)
+            
+            req.body.birthday=dayjs(req.body.birthday).format('DD-MM-YYYY')
+            console.log(req.body)
             
             const userSchema = joi.object(
 
@@ -228,41 +237,40 @@ const connection = new Pool({
                         }),
                     cpf: joi.string().pattern(/^[0-9]{11}$/)
                         .messages({
-                            'string.pattern.base' : '"cpf" deve ser composto de apenas números e ter 11 caracteres',   
+                            'string.pattern.base' : '"cpf" deve ser composto de anpm install -g moment --save penas números e ter 11 caracteres',   
                         }),
-                    birthday: '1992-10-05'
+                    birthday: joi.date()
+                        .messages({
+                            'date.base': '"birthday" deve ser data válida',
+                            
+                        })
                   }
             )
 
             const validateNewUser = userSchema.validate(req.body)
+            const{name,phone,cpf,birthday} = req.body
 
             if(validateNewUser.error){
                 console.log('nao pode')
-                //res.status(400).send(validateNewUser.error)
+               // res.status(400).send(validateNewUser.error)
                 res.status(400).send(validateNewUser.error.details[0].message)
                 return
             }else{
                 console.log(' pode')
-                // try{
-                //     await connection.query(`INSERT INTO games (name,image,"stockTotal","categoryId","pricePerDay") VALUES ($1,$2,$3,$4,$5)`,[name,image,stockTotal,categoryId,pricePerDay])
-                //     res.sendStatus(200)
-                // }catch(e){
-                //     console.log('Erro ao salvar jogo novo no banco de dados')
-                //     console.log(e)
-                //     res.sendStatus(500)
-                // }
+                try{
+                    await connection.query(`INSERT INTO customers (name,phone,cpf,birthday) VALUES ($1,$2,$3,$4)`,[name,phone,cpf,birthday])
+                    res.sendStatus(200)
+                }catch(e){
+                    console.log('Erro ao salvar cliente novo no banco de dados')
+                    console.log(e)
+                    res.sendStatus(500)
+                }
                 
             }
-
-            try{
-                const allCustomers = await connection.query(`SELECT * FROM customers`)
-                
-                res.send(allCustomers.rows)
-            }catch(e){
-                console.log('Erro ao pegar a lista de clientes')
-                console.log(e)
-            }      
         })
+
+       
+        
         
         
         

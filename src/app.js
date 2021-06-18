@@ -395,9 +395,82 @@ const connection = new Pool({
        
         
     /*-------------------------------------Rentals------------------------*/
-    
+
         
-        
+        app.post("/rentals", async(req,res)=>{
+           
+           /*checking client*/
+            try{
+                const checkClient = await connection.query(`
+                SELECT *
+                FROM customers
+                WHERE id = $1
+                `,[req.body.customerId])
+
+                if(!checkClient.rows.length){
+                    res.sendStatus(400)
+                    return
+                }
+              
+            }catch(e){
+                console.log(e)
+                return
+            }
+
+
+            try{
+                const checkGame = await connection.query(`
+                SELECT *
+                FROM games
+                WHERE id = $1
+                `,[req.body.gameId])
+
+                //res.send(checkGame)
+
+                if(!checkGame.rows.length){
+                    res.sendStatus(400)
+                    return
+                }
+
+              
+            }catch(e){
+                console.log(e)
+                return
+            }
+           
+           
+           
+           
+            req.body.rentDate = dayjs().format('DD-MM-YYYY')
+           
+            console.log(dayjs(Date.now()).format('DD-MM-YYYY'))
+
+            // console.log(dayjs(Date.now()).add(3,'days').format('DD-MM-YYYY'))
+
+            req.body.returnDate=null
+
+                try{
+                    const price = await connection.query(`
+                    SELECT games."pricePerDay" FROM games
+                    WHERE id = $1
+                    
+                    `,[req.body.gameId])
+                    //console.log(price)
+                    req.body.originalPrice = (price.rows[0].pricePerDay)*req.body.daysRented
+                   
+                }catch(e){
+                    console.log('Erro ao pesquisar jogo')
+                    console.log(e)
+                }
+
+                req.body.delayFee = null
+
+                console.log(req.body)
+            
+            
+        }) 
+
+        //.format('DD-MM-YYYY')
         
     /***********8------------------------------Functions
      * --------------------*/

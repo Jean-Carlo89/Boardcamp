@@ -396,6 +396,72 @@ const connection = new Pool({
         
     /*-------------------------------------Rentals------------------------*/
 
+        app.get("/rentals" ,async(req,res)=>{
+
+            
+            console.log(req.query)
+
+            if(req.query["customerId"]){
+                try{
+                    const customerRental = await connection.query(`
+                    SELECT rentals.*,
+                    jsonb_build_object('name', customers.name, 'id', customers.id) AS customer,
+                    jsonb_build_object('id', games.id, 'name', games.name, 'categoryId',
+                    games."categoryId", 'categoryName', categories.name) AS game
+                    FROM rentals
+                    JOIN customers ON rentals."customerId" = customers.id 
+                    JOIN games ON rentals."gameId" = games.id
+                    JOIN categories ON categories.id = games."categoryId"
+                    WHERE customers.id = $1
+                    `,[req.query.customerId])
+
+                    customerRental.rows.forEach((rental)=>{
+                        rental.rentDate = dayjs(rental.rentDate).format('DD-MM-YYYY')
+                    })
+    
+                    res.send(customerRental.rows)
+                       return
+                   }catch(e){
+                       res.send('erro')
+                       console.log(e)
+                   }
+               }
+               
+               
+               
+               
+               
+               /*---GETTAR TUDO------------------*/
+            try{
+                const rentals = await connection.query(`
+                SELECT rentals.*, 
+            jsonb_build_object('name', customers.name, 'id', customers.id) AS customer,
+            jsonb_build_object('id', games.id, 'name', games.name, 'categoryId', 
+            games."categoryId", 'categoryName', categories.name) AS game            
+            FROM rentals 
+            JOIN customers ON rentals."customerId" = customers.id
+            JOIN games ON rentals."gameId" = games.id
+            JOIN categories ON categories.id = games."categoryId"
+            
+                `)
+
+                rentals.rows.forEach((rental)=>{
+                    rental.rentDate = dayjs(rental.rentDate).format('DD-MM-YYYY')
+                })
+
+
+
+               
+                
+                res.send(rentals.rows)
+                //res.send(rentals.rows)
+            }catch(e){
+                console.log('Erro ao pegar os aluguéis cadastrados')
+                console.log(e)
+            }
+
+        })
+
         
         app.post("/rentals", async(req,res)=>{
            
@@ -465,8 +531,47 @@ const connection = new Pool({
 
                 req.body.delayFee = null
 
-                console.log(req.body)
-            
+                //console.log(req.body)
+                
+                //console.log(dayjs(req.body.rentDate).format('DD-MM-YYYY').isValid())
+                
+                const userSchema = joi.object(
+
+                        {
+                        daysRented: joi.number().integer().positive(),
+                        customerId:joi.number().integer().positive(),
+                        rentDate:joi.string(),
+                        gameId:joi.number().integer().positive(),
+                        returnDate:joi.allow(null),
+                        originalPrice:joi.number().integer().positive(),
+                        delayFee: joi.allow(null)
+                        })  
+
+                const validateNewRental = userSchema.validate(req.body)
+
+                if(validateNewRental.error){
+                    res.status(400).send(validateNewRental.error.details[0].message)
+                    return
+                }else{
+                    console.log(req.body)
+                    const{daysRented,customerId,rentDate,gameId,returnDate,originalPrice,
+                        delayFee} = req.body
+                   try{
+                        await connection.query(`
+                        INSERT INTO rentals
+                        ("daysRented","customerId","rentDate","gameId","returnDate",
+                        "originalPrice","delayFee") 
+                        VALUES ($1,$2,$3,$4,$5,$6,$7)
+                        `,[daysRented,customerId,rentDate,gameId,returnDate,originalPrice,delayFee])
+
+                        res.sendStatus(200)
+                   }catch(e){
+                       console.log('Erro ao registrar aluguel')
+                       console.log(e)
+                   }
+
+                    
+                }
             
         }) 
 

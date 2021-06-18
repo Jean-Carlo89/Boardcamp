@@ -197,6 +197,7 @@ const connection = new Pool({
  
         app.get("/customers", async(req,res)=>{
             
+           
             
             try{
                 const allCustomers = await connection.query(`SELECT * FROM customers`)
@@ -249,6 +250,23 @@ const connection = new Pool({
 
             const validateNewUser = userSchema.validate(req.body)
             const{name,phone,cpf,birthday} = req.body
+
+            try{    
+                const cpfSearch = await connection.query(`
+                SELECT customers.cpf FROM customers
+                WHERE cpf = $1`,[cpf])
+
+              
+                if(cpfSearch.rows[0]){
+                    res.sendStatus(409)
+                    return
+                }
+                
+
+            }catch(e){
+                console.log('Erro ao obter cpf dos clientes')
+                console.log(e)
+            }
 
             if(validateNewUser.error){
                 console.log('nao pode')

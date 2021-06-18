@@ -263,6 +263,60 @@ const connection = new Pool({
         })
 
 
+        
+
+        app.put("/customers/:id", async(req,res)=>{
+
+            const validate = validateCustomer(req.body)
+
+            const{name,phone,cpf,birthday} = req.body
+
+            const {id}  = req.params
+           
+            try{    
+                const cpfSearch = await connection.query(`
+                SELECT customers.cpf FROM customers
+                WHERE cpf = $1`,[cpf])
+    
+                
+                if(cpfSearch.rows[0]){
+                    res.sendStatus(409)
+                    return
+                }
+                
+    
+            }catch(e){
+                console.log('Erro ao obter cpf dos clientes')
+                console.log(e)
+            }
+           
+            
+            if(validate.error){
+               
+                res.status(400).send(validate.error.details[0].message)
+            }else{
+               
+                try{
+                    await connection.query(`
+                    UPDATE customers
+                    SET name = $1,
+                        phone = $2,
+                        cpf = $3,
+                        birthday = $4
+                    WHERE id = $5
+                    `,[name,phone,cpf,birthday,id])
+
+                    res.sendStatus(200)
+                }catch(e){
+                    console.log('erro ao atualizar dados de cliente')
+                    console.log(e)
+                    res.send(e)
+                }
+            }
+                
+        })
+
+
         app.post("/customers", async(req,res)=>{
             
             console.log(dayjs(Date.now()).format('DD-MM-YYYY'))
@@ -340,12 +394,74 @@ const connection = new Pool({
 
        
         
-        
-        
-        
-        
+    /*-------------------------------------Rentals------------------------*/
     
+        
+        
+        
+    /***********8------------------------------Functions
+     * --------------------*/
 
+
+     function validateCustomer(body){
+        body.birthday=dayjs(body.birthday).format('DD-MM-YYYY')
+        //console.log(body)
+        
+        
+        body.birthday=dayjs(body.birthday).format('DD-MM-YYYY')
+        //console.log(body)
+        
+        const userSchema = joi.object(
+
+            {
+                name: joi.string().min(1)
+                 .messages({
+                    // 'string.base': `"name" should be a type of 'text'`,
+                    'string.empty': `"name" não pode estar vazio`,
+                    'any.required': `"name" is a required field`
+                    }),
+                phone: joi.string().min(10).max(11).pattern(/^[0-9]*$/)
+                    .messages({
+                        'string.min': '"phone" tem que ter no mínimo 10 números',
+                        'string.pattern.base' : '"phone" deve conter somente números',
+                        'string.max': '"phone" deve conter no máximo 11 números'
+                    }),
+                cpf: joi.string().pattern(/^[0-9]{11}$/)
+                    .messages({
+                        'string.pattern.base' : '"cpf" deve ser composto de apenas números e ter 11 caracteres',   
+                    }),
+                birthday: joi.date()
+                    .messages({
+                        'date.base': '"birthday" deve ser data válida',
+                        
+                    })
+              }
+        )
+
+        const validateNewUser = userSchema.validate(body)
+        
+        return validateNewUser
+    }
+
+
+//    async function searchCpf(id,cpf,res){
+//         try{    
+//             const cpfSearch = await connection.query(`
+//             SELECT customers.cpf FROM customers
+//             WHERE cpf = $1`,[cpf])
+
+          
+//             if(cpfSearch.rows[0]){
+//                 res.sendStatus(409)
+//                 return
+//             }
+            
+
+//         }catch(e){
+//             console.log('Erro ao obter cpf dos clientes')
+//             console.log(e)
+//         }
+//     }
 
 
   app.listen(4000,()=>{

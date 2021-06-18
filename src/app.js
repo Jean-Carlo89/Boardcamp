@@ -426,6 +426,32 @@ const connection = new Pool({
                        console.log(e)
                    }
                }
+
+               if(req.query["gameId"]){
+                try{
+                    const customerRental = await connection.query(`
+                    SELECT rentals.*,
+                    jsonb_build_object('name', customers.name, 'id', customers.id) AS customer,
+                    jsonb_build_object('id', games.id, 'name', games.name, 'categoryId',
+                    games."categoryId", 'categoryName', categories.name) AS game
+                    FROM rentals
+                    JOIN customers ON rentals."customerId" = customers.id 
+                    JOIN games ON rentals."gameId" = games.id
+                    JOIN categories ON categories.id = games."categoryId"
+                    WHERE games.id = $1
+                    `,[req.query.gameId])
+
+                    customerRental.rows.forEach((rental)=>{
+                        rental.rentDate = dayjs(rental.rentDate).format('DD-MM-YYYY')
+                    })
+    
+                    res.send(customerRental.rows)
+                       return
+                   }catch(e){
+                       res.send('erro')
+                       console.log(e)
+                   }
+               }
                
                
                

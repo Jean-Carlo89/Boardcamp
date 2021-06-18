@@ -68,12 +68,12 @@ const connection = new Pool({
 /***********************************--------------Games------------------------ */
     app.get("/games" , async (req,res)=>{
         
-        console.log(req.query)
+       
         const {name} = req.query
 
 
         if(name){
-            console.log('foi')
+            
             
         try{
             const result = await connection.query(`
@@ -84,7 +84,7 @@ const connection = new Pool({
             
             `,[`%${name}%`])
 
-            //console.log(result)
+            
             res.send(result.rows)
         }catch(e){
             console.log('Erro')
@@ -93,7 +93,7 @@ const connection = new Pool({
         }
 
         }else{
-            //console.log('nao foi')
+            
         
         
         try{
@@ -122,9 +122,9 @@ const connection = new Pool({
                 const categoryTest = await connection.query(`SELECT * FROM categories WHERE id = $1`,[categoryId])
                 const categoryExist = categoryTest.rows.length
                 const gameTest = await connection.query(`SELECT * FROM games WHERE name = $1`,[name])
-                console.log(gameTest)
+                
                 const gameAlreadyExist = gameTest.rows.length
-                //console.log(result)
+                
                 
                     if(!categoryExist){
                         res.status(400).send('categoria não existe')
@@ -167,11 +167,11 @@ const connection = new Pool({
                         const validateNewGame = userSchema.validate(req.body)
                             
                             if(validateNewGame.error){
-                                //console.log('nao pode')
+                                
                                 res.status(400).send(validateNewGame.error.details[0].message)
                                 return
                             }else{
-                                //console.log(' pode')
+                               
                                 try{
                                     await connection.query(`INSERT INTO games (name,image,"stockTotal","categoryId","pricePerDay") VALUES ($1,$2,$3,$4,$5)`,[name,image,stockTotal,categoryId,pricePerDay])
                                     res.sendStatus(200)
@@ -201,7 +201,7 @@ const connection = new Pool({
 
 
             if(cpf){
-                console.log('foi')
+                
                 
             try{
                 const result = await connection.query(`
@@ -211,7 +211,7 @@ const connection = new Pool({
                 
                 `,[`%${cpf}%`])
 
-                //console.log(result)
+                
                 res.send(result.rows)
             }catch(e){
                 console.log('Erro')
@@ -236,9 +236,9 @@ const connection = new Pool({
         })
 
         app.get("/customers/:id", async(req,res)=>{
-               //console.log(req.params.id) 
+               
                 const {id} = req.params
-               // console.log(id)
+               
                
                try{
                     const customer = await connection.query(`
@@ -319,13 +319,10 @@ const connection = new Pool({
 
         app.post("/customers", async(req,res)=>{
             
-            console.log(dayjs(Date.now()).format('DD-MM-YYYY'))
-            console.log(dayjs("1992-10-05").format('DD-MM-YYYY'))
-            console.log(req.body.birthday)
+           
             
             req.body.birthday=dayjs(req.body.birthday).format('DD-MM-YYYY')
-            console.log(req.body)
-            
+           
             const userSchema = joi.object(
 
                 {
@@ -374,12 +371,12 @@ const connection = new Pool({
             }
 
             if(validateNewUser.error){
-                console.log('nao pode')
+                
                // res.status(400).send(validateNewUser.error)
                 res.status(400).send(validateNewUser.error.details[0].message)
                 return
             }else{
-                console.log(' pode')
+                
                 try{
                     await connection.query(`INSERT INTO customers (name,phone,cpf,birthday) VALUES ($1,$2,$3,$4)`,[name,phone,cpf,birthday])
                     res.sendStatus(200)
@@ -399,7 +396,7 @@ const connection = new Pool({
         app.get("/rentals" ,async(req,res)=>{
 
             
-            console.log(req.query)
+           
 
             if(req.query["customerId"]){
                 try{
@@ -535,9 +532,7 @@ const connection = new Pool({
            
             req.body.rentDate = dayjs().format('DD-MM-YYYY')
            
-            console.log(dayjs(Date.now()).format('DD-MM-YYYY'))
-
-            // console.log(dayjs(Date.now()).add(3,'days').format('DD-MM-YYYY'))
+           
 
             req.body.returnDate=null
 
@@ -547,7 +542,7 @@ const connection = new Pool({
                     WHERE id = $1
                     
                     `,[req.body.gameId])
-                    //console.log(price)
+                    
                     req.body.originalPrice = (price.rows[0].pricePerDay)*req.body.daysRented
                    
                 }catch(e){
@@ -557,10 +552,6 @@ const connection = new Pool({
 
                 req.body.delayFee = null
 
-                //console.log(req.body)
-                
-                //console.log(dayjs(req.body.rentDate).format('DD-MM-YYYY').isValid())
-                
                 const userSchema = joi.object(
 
                         {
@@ -579,7 +570,7 @@ const connection = new Pool({
                     res.status(400).send(validateNewRental.error.details[0].message)
                     return
                 }else{
-                    console.log(req.body)
+                    
                     const{daysRented,customerId,rentDate,gameId,returnDate,originalPrice,
                         delayFee} = req.body
                    try{
@@ -601,7 +592,80 @@ const connection = new Pool({
             
         }) 
 
-        //.format('DD-MM-YYYY')
+
+
+
+
+        app.post("/rentals/:id/return", async(req,res)=>{
+
+            try{
+
+                const returnTarget = await connection.query(`
+                SELECT * FROM rentals WHERE id = $1
+                `,[req.params.id])
+
+                const {rentDate,daysRented} = returnTarget.rows[0]
+                
+                const today = dayjs().format("DD-MM-YYYY");
+               
+                
+              
+               
+               const d = new Date(2021,5,20)
+               const day = dayjs(d).format("DD-MM-YYYY")
+               
+               
+               //const lateDays = dayjs(today).diff(rentDate, "day") - daysRented;
+               const lateDays = dayjs(day).diff(dayjs(rentDate).format('DD-MM-YYYY'),"day")
+               
+             
+                
+               res.send(returnTarget.rows)
+                return
+                
+            }catch(e){
+                console.log('Erro ao retornar o jogo')
+                console.log(e)
+            }
+
+        })
+
+        app.delete("/rentals/:id" , async(req,res)=>{
+
+            
+            try{
+                const checkRentalId = await connection.query(`
+                SELECT * FROM rentals WHERE id = $1
+                `,[req.params.id])
+
+                if(!checkRentalId.rows.length){
+                    res.status(404).send('Este aluguel não existe')
+                    return
+                }
+
+                // if(checkRentalId.rows[0].returnDate!==null){
+                //     res.status(400)
+                // }
+
+                try{
+                    await connection.query(`
+                    DELETE FROM rentals WHERE id = $1 
+                    
+                `,[req.params.id])
+
+                res.sendStatus(200)
+
+                }catch(e){
+                    console.log('Erro ao excluir aluguel')
+                    console.log(e)
+                }
+
+
+               
+            }catch(e){
+                console.log(e)
+            }
+        })
         
     /***********8------------------------------Functions
      * --------------------*/
@@ -609,11 +673,6 @@ const connection = new Pool({
 
      function validateCustomer(body){
         body.birthday=dayjs(body.birthday).format('DD-MM-YYYY')
-        //console.log(body)
-        
-        
-        body.birthday=dayjs(body.birthday).format('DD-MM-YYYY')
-        //console.log(body)
         
         const userSchema = joi.object(
 
@@ -646,27 +705,6 @@ const connection = new Pool({
         
         return validateNewUser
     }
-
-
-//    async function searchCpf(id,cpf,res){
-//         try{    
-//             const cpfSearch = await connection.query(`
-//             SELECT customers.cpf FROM customers
-//             WHERE cpf = $1`,[cpf])
-
-          
-//             if(cpfSearch.rows[0]){
-//                 res.sendStatus(409)
-//                 return
-//             }
-            
-
-//         }catch(e){
-//             console.log('Erro ao obter cpf dos clientes')
-//             console.log(e)
-//         }
-//     }
-
 
   app.listen(4000,()=>{
       console.log('server rodando na 4000')
